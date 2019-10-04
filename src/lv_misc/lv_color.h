@@ -161,12 +161,33 @@ typedef lv_color32_t lv_color_t;
 
 typedef uint8_t lv_opa_t;
 
+/**
+ * H: 0 to 359
+ * S: 0 to 100
+ * V: 0 to 100
+ */
 typedef struct
 {
     uint16_t h;
     uint8_t s;
     uint8_t v;
 } lv_color_hsv_t;
+
+/**
+ * H: 0 to 255
+ * S: 0 to 255
+ * V: 0 to 255
+ * Idea comes from MIT licensed FastLED, explained here:
+ * https://github.com/FastLED/FastLED/wiki/FastLED-HSV-Colors
+ * https://github.com/FastLED/FastLED/blob/master/pixeltypes.h
+ * `struct CHSV`
+ */
+typedef struct
+{
+    int16_t h;
+    uint8_t s;
+    uint8_t v;
+} lv_color_hsv2_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -305,10 +326,28 @@ static inline uint32_t lv_color_to32(lv_color_t color)
 #elif LV_COLOR_DEPTH == 16
 #if LV_COLOR_16_SWAP == 0
     lv_color32_t ret;
+    ret.ch.alpha = 0xFF;
+#if true
+    /*
+     * Per https://developer.apple.com/documentation/accelerate/1533159-vimageconvert_rgb565toargb8888
+     */
+    ret.ch.red   = ( color.ch.red * 255 + 15 ) / 31;
+    ret.ch.green = ( color.ch.green * 255 + 31 ) / 63;
+    ret.ch.blue  = ( color.ch.blue * 255 + 15 ) / 31;
+#elif true
+    /*
+     * Scale 5bit 0-31 (2^5-1) to 8bit 0-255 (2^8-1)
+     * Find a good scaling factor:
+     * 255*64/31 = 526.4516129032
+     */
+    ret.ch.red   = ( color.ch.red * 526 + 14 ) >> 6;
+    ret.ch.green = ( color.ch.green * 259 + 3 ) >> 6;
+    ret.ch.blue  = ( color.ch.blue * 526 + 14 ) >> 6;
+#else
     ret.ch.red   = color.ch.red * 8;   /*(2^8 - 1)/(2^5 - 1) = 255/31 = 8*/
     ret.ch.green = color.ch.green * 4; /*(2^8 - 1)/(2^6 - 1) = 255/63 = 4*/
     ret.ch.blue  = color.ch.blue * 8;  /*(2^8 - 1)/(2^5 - 1) = 255/31 = 8*/
-    ret.ch.alpha = 0xFF;
+#endif
     return ret.full;
 #else
     lv_color32_t ret;
@@ -429,6 +468,9 @@ static inline lv_color_t lv_color_hex3(uint32_t c)
     return lv_color_make((uint8_t)(((c >> 4) & 0xF0) | ((c >> 8) & 0xF)), (uint8_t)((c & 0xF0) | ((c & 0xF0) >> 4)),
                          (uint8_t)((c & 0xF) | ((c & 0xF) << 4)));
 }
+
+lv_color_t lv_color_hsv2_to_rgb(uint8_t h, uint8_t s, uint8_t v);
+lv_color_hsv2_t lv_color_rgb_to_hsv2(uint8_t r, uint8_t g, uint8_t b);
 
 /**
  * Convert a HSV color to RGB

@@ -48,7 +48,7 @@ typedef uint8_t lv_cpicker_color_mode_t;
 
 /*Data of colorpicker*/
 typedef struct {
-    lv_color_hsv_t hsv;
+    lv_color_hsv2_t hsv;
     struct {
         lv_style_t * style;
         lv_point_t pos;
@@ -109,7 +109,7 @@ void lv_cpicker_set_style(lv_obj_t * cpicker, lv_cpicker_style_t type, lv_style_
  * @param hue current selected hue [0..360]
  * @return true if changed, otherwise false
  */
-bool lv_cpicker_set_hue(lv_obj_t * cpicker, uint16_t hue);
+bool lv_cpicker_set_hue(lv_obj_t * cpicker, uint8_t hue);
 
 /**
  * Set the current saturation of a colorpicker.
@@ -133,7 +133,7 @@ bool lv_cpicker_set_value(lv_obj_t * cpicker, uint8_t val);
  * @param hsv current selected hsv
  * @return true if changed, otherwise false
  */
-bool lv_cpicker_set_hsv(lv_obj_t * cpicker, lv_color_hsv_t hsv);
+bool lv_cpicker_set_hsv(lv_obj_t * cpicker, lv_color_hsv2_t hsv);
 
 /**
  * Set the current color of a colorpicker.
@@ -223,7 +223,7 @@ uint8_t lv_cpicker_get_value(lv_obj_t * cpicker);
  * @param cpicker pointer to colorpicker object
  * @return current selected hsv
  */
-lv_color_hsv_t lv_cpicker_get_hsv(lv_obj_t * cpicker);
+lv_color_hsv2_t lv_cpicker_get_hsv(lv_obj_t * cpicker);
 
 /**
  * Get the current selected color of a colorpicker.
@@ -249,6 +249,10 @@ bool lv_cpicker_get_preview(lv_obj_t * cpicker);
 /*=====================
  * Other functions
  *====================*/
+
+void lv_cpicker_increment(lv_obj_t * cpicker);
+
+void lv_cpicker_decrement(lv_obj_t * cpicker);
 
 /**********************
  *      MACROS

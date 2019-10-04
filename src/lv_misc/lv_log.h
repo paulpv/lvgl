@@ -20,6 +20,8 @@ extern "C" {
 #endif
 #include <stdint.h>
 
+void DEBUG_LOG(const char* format, ...);
+
 /*********************
  *      DEFINES
  *********************/

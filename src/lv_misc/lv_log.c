@@ -9,6 +9,24 @@
 #include "lv_log.h"
 #if LV_USE_LOG
 
+#include <stdarg.h>
+#define DEBUG_LOG_BUF_LEN 256
+char DEBUG_LOG_BUF[DEBUG_LOG_BUF_LEN];
+
+void _DEBUG_LOG(const char* format, va_list va)
+{
+    lv_vsnprintf(DEBUG_LOG_BUF, DEBUG_LOG_BUF_LEN, format, va);
+    LV_LOG_ERROR(DEBUG_LOG_BUF);
+}
+
+void DEBUG_LOG(const char* format, ...)
+{
+  va_list va;
+  va_start(va, format);
+  _DEBUG_LOG(format, va);
+  va_end(va);
+}
+
 #if LV_LOG_PRINTF
 #include <stdio.h>
 #endif
