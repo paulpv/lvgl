@@ -79,6 +79,7 @@ lv_obj_t * lv_roller_create(lv_obj_t * par, const lv_obj_t * copy)
     LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
     ext->ddlist.draw_arrow = 0; /*Do not draw arrow by default*/
+    ext->mode = LV_ROLLER_MODE_NORMAL;
 
     /*The signal and design functions are not copied so set them here*/
     lv_obj_set_signal_cb(new_roller, lv_roller_signal);
@@ -148,12 +149,13 @@ void lv_roller_set_options(lv_obj_t * roller, const char * options, lv_roller_mo
 
         /* Make sure the roller's height and the scrollable's height is refreshed.
          * They are refreshed in `LV_SIGNAL_COORD_CHG` but if the new options has the same width
-         * that signal won't be called. (It called because LV_FIT_TIGHT hor fit)*/
+         * that signal won't be called. (It's called because of LV_FIT_TIGHT hor fit)*/
         refr_height(roller);
+        refr_position(roller, LV_ANIM_OFF);
     } else {
         ext->mode = LV_ROLLER_MODE_INIFINITE;
 
-        uint32_t opt_len = strlen(options) + 1; /*+1 to add '\n' after option lists*/
+        size_t opt_len = strlen(options) + 1; /*+1 to add '\n' after option lists*/
         char * opt_extra = lv_mem_alloc(opt_len * LV_ROLLER_INF_PAGES);
         uint8_t i;
         for(i = 0; i < LV_ROLLER_INF_PAGES; i++) {
@@ -397,7 +399,7 @@ static bool lv_roller_design(lv_obj_t * roller, const lv_area_t * mask, lv_desig
             new_style.text.color = sel_style->text.color;
             new_style.text.opa   = sel_style->text.opa;
             lv_draw_label(&ext->ddlist.label->coords, &mask_sel, &new_style, opa_scale,
-                          lv_label_get_text(ext->ddlist.label), txt_align, NULL, -1, -1, NULL);
+                          lv_label_get_text(ext->ddlist.label), txt_align, NULL, NULL, NULL, lv_obj_get_base_dir(ext->ddlist.label));
         }
     }
 
@@ -507,6 +509,7 @@ static lv_res_t lv_roller_scrl_signal(lv_obj_t * roller_scrl, lv_signal_t sign, 
     /* Include the ancient signal function */
     res = ancestor_scrl_signal(roller_scrl, sign, param);
     if(res != LV_RES_OK) return res;
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
     lv_indev_t * indev    = lv_indev_get_act();
     int32_t id            = -1;

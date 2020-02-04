@@ -1,6 +1,7 @@
 /**
  * @file lv_cpicker.c
  *
+ * From @AloyseTech and @paulpv.
  */
 
 /*********************
@@ -106,6 +107,7 @@ lv_obj_t * lv_cpicker_create(lv_obj_t * par, const lv_obj_t * copy)
     if(ext == NULL) return NULL;
 
     /*Initialize the allocated 'ext' */
+    ext->type = LV_CPICKER_DEF_TYPE;
     ext->hsv = LV_CPICKER_DEF_HSV;
     ext->indic.style = &lv_style_plain;
     ext->indic.colored = 0;
@@ -121,6 +123,7 @@ lv_obj_t * lv_cpicker_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*If no copy do the basic initialization*/
     if(copy == NULL) {
+        lv_obj_set_size(new_cpicker, LV_DPI * 2, LV_DPI * 2);
         lv_obj_set_protect(new_cpicker, LV_PROTECT_PRESS_LOST);
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
@@ -272,7 +275,11 @@ bool lv_cpicker_set_hsv(lv_obj_t * cpicker, lv_color_hsv_t hsv)
  */
 bool lv_cpicker_set_color(lv_obj_t * cpicker, lv_color_t color)
 {
-    return lv_cpicker_set_hsv(cpicker, lv_color_rgb_to_hsv(color.ch.red, color.ch.green, color.ch.blue));
+    lv_color32_t c32;
+    c32.full = lv_color_to32(color);
+
+    return lv_cpicker_set_hsv(cpicker,
+            lv_color_rgb_to_hsv(c32.ch.red, c32.ch.green, c32.ch.blue));
 }
 
 /**
@@ -615,7 +622,8 @@ static void draw_disc_grad(lv_obj_t * cpicker, const lv_area_t * mask, lv_opa_t 
     lv_point_t triangle_points[3];
     lv_style_t style;
     lv_style_copy(&style, &lv_style_plain);
-    for(uint16_t i = start_angle; i <= end_angle; i+= LV_CPICKER_DEF_QF) {
+    uint16_t i;
+    for(i = start_angle; i <= end_angle; i+= LV_CPICKER_DEF_QF) {
         style.body.main_color = angle_to_mode_color(cpicker, i);
         style.body.grad_color = style.body.main_color;
 
@@ -700,7 +708,8 @@ static void draw_rect_grad(lv_obj_t * cpicker, const lv_area_t * mask, lv_opa_t 
     style.body.shadow.width = 0;
     style.body.opa = LV_OPA_COVER;
 
-    for(uint16_t i = 0; i < 360; i += i_step) {
+    uint16_t i;
+    for(i = 0; i < 360; i += i_step) {
         style.body.main_color = angle_to_mode_color(cpicker, i);
         style.body.grad_color = style.body.main_color;
 
@@ -741,7 +750,7 @@ static void invalidate_indic(lv_obj_t * cpicker)
 {
     lv_area_t indic_area = get_indic_area(cpicker);
 
-    lv_inv_area(lv_obj_get_disp(cpicker), &indic_area);
+    lv_obj_invalidate_area(cpicker, &indic_area);
 }
 
 static lv_area_t get_indic_area(lv_obj_t * cpicker)
@@ -750,7 +759,7 @@ static lv_area_t get_indic_area(lv_obj_t * cpicker)
     const lv_style_t * style_main = lv_cpicker_get_style(cpicker, LV_CPICKER_STYLE_MAIN);
     const lv_style_t * style_indic = lv_cpicker_get_style(cpicker, LV_CPICKER_STYLE_INDICATOR);
 
-    uint16_t r;
+    uint16_t r = 0;
     if(ext->type == LV_CPICKER_TYPE_DISC) r = style_main->line.width / 2;
     else if(ext->type == LV_CPICKER_TYPE_RECT) {
         lv_coord_t h = lv_obj_get_height(cpicker);
@@ -880,7 +889,7 @@ static lv_res_t lv_cpicker_signal(lv_obj_t * cpicker, lv_signal_t sign, void * p
         if(ext->type == LV_CPICKER_TYPE_RECT) {
             /*If pressed long enough without change go to next color mode*/
             uint32_t diff = lv_tick_elaps(ext->last_change_time);
-            if(diff > indev->driver.long_press_time * 2 && !ext->color_mode_fixed) {
+            if(diff > (uint32_t)indev->driver.long_press_time * 2 && !ext->color_mode_fixed) {
                 next_color_mode(cpicker);
                 lv_indev_wait_release(lv_indev_get_act());
                 return res;
